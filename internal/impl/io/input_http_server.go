@@ -335,11 +335,11 @@ input:
 `)
 }
 
-// HTTTPInputMiddleware is a custom middleware type for HTTP server inputs to be run after message extraction.
-type HTTTPInputMiddleware func(*http.Request, message.Batch) (message.Batch, error)
+// HTTTPInputMiddlewareMeta is a custom middleware type for HTTP server inputs that adds metadata to messages.
+type HTTTPInputMiddlewareMeta func(*http.Request) (map[string]any, error)
 
 // RegisterCustomHTTPServerInput registers a custom HTTP server input with a given name and optional middleware.
-func RegisterCustomHTTPServerInput(name string, middleware HTTTPInputMiddleware) {
+func RegisterCustomHTTPServerInput(name string, middleware HTTTPInputMiddlewareMeta) {
 	err := service.RegisterBatchInput(
 		name, hsiSpec(),
 		func(conf *service.ParsedConfig, mgr *service.Resources) (service.BatchInput, error) {
@@ -383,13 +383,13 @@ type httpServerInput struct {
 
 	shutSig *shutdown.Signaller
 
-	mPostRcvd  metrics.StatCounter
-	mWSRcvd    metrics.StatCounter
-	mLatency   metrics.StatTimer
-	middleware HTTTPInputMiddleware
+	mPostRcvd      metrics.StatCounter
+	mWSRcvd        metrics.StatCounter
+	mLatency       metrics.StatTimer
+	middlewareMeta HTTTPInputMiddlewareMeta
 }
 
-func newHTTPServerInput(conf hsiConfig, mgr bundle.NewManagement, middleware HTTTPInputMiddleware) (input.Streamed, error) {
+func newHTTPServerInput(conf hsiConfig, mgr bundle.NewManagement, middleware HTTTPInputMiddlewareMeta) (input.Streamed, error) {
 	var gMux *mux.Router
 	var server *http.Server
 
@@ -419,7 +419,7 @@ func newHTTPServerInput(conf hsiConfig, mgr bundle.NewManagement, middleware HTT
 		mWSRcvd:   mRcvd,
 		mPostRcvd: mRcvd,
 
-		middleware: middleware,
+		middlewareMeta: middleware,
 	}
 
 	postHdlr := gzipHandler(h.postHandler)
@@ -545,9 +545,15 @@ func (h *httpServerInput) extractMessageFromRequest(r *http.Request) (message.Ba
 		}
 	}
 
-	if h.middleware != nil {
-		if msg, err = h.middleware(r, msg); err != nil {
+	if h.middlewareMeta != nil {
+		metaData, err := h.middlewareMeta(r)
+		if err != nil {
 			return nil, fmt.Errorf("middleware failed: %w", err)
+		}
+		for key, value := range metaData {
+			for _, part := range msg {
+				part.MetaSetMut(key, value)
+			}
 		}
 	}
 
