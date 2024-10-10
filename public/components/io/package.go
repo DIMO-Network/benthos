@@ -10,5 +10,12 @@ package io
 
 import (
 	// Import only io packages.
-	_ "github.com/redpanda-data/benthos/v4/internal/impl/io"
+	"github.com/redpanda-data/benthos/v4/internal/impl/io"
 )
+
+type HTTTPInputMiddleware io.HTTTPInputMiddleware
+
+// RegisterCustomHTTPServerInput registers a custom HTTP server input with a given name and optional middleware.
+func RegisterCustomHTTPServerInput(name string, middleware HTTTPInputMiddleware) {
+	io.RegisterCustomHTTPServerInput(name, io.HTTTPInputMiddleware(middleware))
+}

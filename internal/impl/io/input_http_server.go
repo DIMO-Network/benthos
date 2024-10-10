@@ -335,9 +335,13 @@ input:
 `)
 }
 
-func init() {
+// HTTTPInputMiddleware is a custom middleware type for HTTP server inputs to be run after message extraction.
+type HTTTPInputMiddleware func(*http.Request, message.Batch) (message.Batch, error)
+
+// RegisterCustomHTTPServerInput registers a custom HTTP server input with a given name and optional middleware.
+func RegisterCustomHTTPServerInput(name string, middleware HTTTPInputMiddleware) {
 	err := service.RegisterBatchInput(
-		"http_server", hsiSpec(),
+		name, hsiSpec(),
 		func(conf *service.ParsedConfig, mgr *service.Resources) (service.BatchInput, error) {
 			hsiConf, err := hsiConfigFromParsed(conf)
 			if err != nil {
@@ -348,7 +352,7 @@ func init() {
 			// can return a proper service.BatchInput implementation.
 
 			oldMgr := interop.UnwrapManagement(mgr)
-			i, err := newHTTPServerInput(hsiConf, oldMgr)
+			i, err := newHTTPServerInput(hsiConf, oldMgr, middleware)
 			if err != nil {
 				return nil, err
 			}
@@ -358,6 +362,10 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func init() {
+	RegisterCustomHTTPServerInput("http_server", nil)
 }
 
 //------------------------------------------------------------------------------
@@ -375,12 +383,13 @@ type httpServerInput struct {
 
 	shutSig *shutdown.Signaller
 
-	mPostRcvd metrics.StatCounter
-	mWSRcvd   metrics.StatCounter
-	mLatency  metrics.StatTimer
+	mPostRcvd  metrics.StatCounter
+	mWSRcvd    metrics.StatCounter
+	mLatency   metrics.StatTimer
+	middleware HTTTPInputMiddleware
 }
 
-func newHTTPServerInput(conf hsiConfig, mgr bundle.NewManagement) (input.Streamed, error) {
+func newHTTPServerInput(conf hsiConfig, mgr bundle.NewManagement, middleware HTTTPInputMiddleware) (input.Streamed, error) {
 	var gMux *mux.Router
 	var server *http.Server
 
@@ -409,6 +418,8 @@ func newHTTPServerInput(conf hsiConfig, mgr bundle.NewManagement) (input.Streame
 		mLatency:  mgr.Metrics().GetTimer("input_latency_ns"),
 		mWSRcvd:   mRcvd,
 		mPostRcvd: mRcvd,
+
+		middleware: middleware,
 	}
 
 	postHdlr := gzipHandler(h.postHandler)
@@ -531,6 +542,12 @@ func (h *httpServerInput) extractMessageFromRequest(r *http.Request) (message.Ba
 	for k, vals := range r.Header {
 		for _, v := range vals {
 			textMapGeneric[k] = v
+		}
+	}
+
+	if h.middleware != nil {
+		if msg, err = h.middleware(r, msg); err != nil {
+			return nil, fmt.Errorf("middleware failed: %w", err)
 		}
 	}
 
