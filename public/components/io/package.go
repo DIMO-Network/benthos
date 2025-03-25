@@ -16,9 +16,9 @@ import (
 )
 
 // HTTTPInputMiddlewareMeta is a public type that is used to register custom middleware for adding metadata to a message.
-type HTTTPInputMiddlewareMetaConst io.HTTTPInputMiddlewareMetaConstructor
+type HTTTPInputMiddlewareMetaConst io.HTTPInputMiddlewareMetaConstructor
 
 // RegisterCustomHTTPServerInput registers a custom HTTP server input with a given name and optional middleware.
 func RegisterCustomHTTPServerInput(name string, middlewareConst HTTTPInputMiddlewareMetaConst, conf *service.ConfigField) {
-	io.RegisterCustomHTTPServerInput(name, io.HTTTPInputMiddlewareMetaConstructor(middlewareConst), conf)
+	io.RegisterCustomHTTPServerInput(name, io.HTTPInputMiddlewareMetaConstructor(middlewareConst), conf)
 }
