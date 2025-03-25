@@ -352,7 +352,10 @@ type HTTTPInputMiddlewareMetaConstructor func(conf *service.ParsedConfig) (HTTTP
 
 // RegisterCustomHTTPServerInput registers a custom HTTP server input with a given name and optional middleware.
 func RegisterCustomHTTPServerInput(name string, mdlWareConst HTTTPInputMiddlewareMetaConstructor, extraSpec *service.ConfigField) {
-	spec := hsiSpec().Field(extraSpec)
+	spec := hsiSpec()
+	if extraSpec != nil {
+		spec = hsiSpec().Field(extraSpec)
+	}
 	err := service.RegisterBatchInput(
 		name, spec,
 		func(conf *service.ParsedConfig, mgr *service.Resources) (service.BatchInput, error) {
