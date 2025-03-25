@@ -346,9 +346,6 @@ input:
 `)
 }
 
-// HTTPInputMiddlewareMeta is a custom middleware type for HTTP server inputs that adds metadata to messages.
-type HTTPInputMiddlewareMeta func(*http.Request) (map[string]any, error)
-
 // RegisterCustomHTTPServerInput registers a custom HTTP server input with a given name and optional middleware.
 func RegisterCustomHTTPServerInput(name string, mdlWareConst func(conf *service.ParsedConfig) (func(*http.Request) (map[string]any, error), error), extraSpec *service.ConfigField) {
 	spec := hsiSpec()
