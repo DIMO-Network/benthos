@@ -16,12 +16,12 @@ import (
 )
 
 // HTTPInputMiddlewareMetaConst is a public type that is used to construct the http input middleware with optional config fields.
-type HTTPInputMiddlewareMetaConst io.HTTPInputMiddlewareMetaConstructor
+type HTTPInputMiddlewareMetaConst func(conf *service.ParsedConfig) (HTTPInputMiddlewareMeta, error)
 
 // HTTPInputMiddlewareMeta is a public type that is used to register custom middleware for adding metadata to a message.
 type HTTPInputMiddlewareMeta io.HTTPInputMiddlewareMeta
 
 // RegisterCustomHTTPServerInput registers a custom HTTP server input with a given name and optional middleware.
-func RegisterCustomHTTPServerInput(name string, middlewareConst HTTPInputMiddlewareMetaConst, conf *service.ConfigField) {
-	io.RegisterCustomHTTPServerInput(name, io.HTTPInputMiddlewareMetaConstructor(middlewareConst), conf)
+func RegisterCustomHTTPServerInput(name string, middlewareConst func(conf *service.ParsedConfig) (io.HTTPInputMiddlewareMeta, error), conf *service.ConfigField) {
+	io.RegisterCustomHTTPServerInput(name, middlewareConst, conf)
 }
