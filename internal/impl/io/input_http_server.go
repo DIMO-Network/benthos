@@ -350,7 +350,7 @@ input:
 type HTTPInputMiddlewareMeta func(*http.Request) (map[string]any, error)
 
 // RegisterCustomHTTPServerInput registers a custom HTTP server input with a given name and optional middleware.
-func RegisterCustomHTTPServerInput(name string, mdlWareConst func(conf *service.ParsedConfig) (HTTPInputMiddlewareMeta, error), extraSpec *service.ConfigField) {
+func RegisterCustomHTTPServerInput(name string, mdlWareConst func(conf *service.ParsedConfig) (func(*http.Request) (map[string]any, error), error), extraSpec *service.ConfigField) {
 	spec := hsiSpec()
 	if extraSpec != nil {
 		spec = hsiSpec().Field(extraSpec)

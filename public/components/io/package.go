@@ -11,6 +11,8 @@
 package io
 
 import (
+	"net/http"
+
 	"github.com/redpanda-data/benthos/v4/internal/impl/io"
 	"github.com/redpanda-data/benthos/v4/public/service"
 )
@@ -22,6 +24,6 @@ type HTTPInputMiddlewareMetaConst func(conf *service.ParsedConfig) (HTTPInputMid
 type HTTPInputMiddlewareMeta io.HTTPInputMiddlewareMeta
 
 // RegisterCustomHTTPServerInput registers a custom HTTP server input with a given name and optional middleware.
-func RegisterCustomHTTPServerInput(name string, middlewareConst func(conf *service.ParsedConfig) (io.HTTPInputMiddlewareMeta, error), conf *service.ConfigField) {
+func RegisterCustomHTTPServerInput(name string, middlewareConst func(conf *service.ParsedConfig) (func(*http.Request) (map[string]any, error), error), conf *service.ConfigField) {
 	io.RegisterCustomHTTPServerInput(name, middlewareConst, conf)
 }
