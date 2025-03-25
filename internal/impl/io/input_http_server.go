@@ -409,10 +409,10 @@ type httpServerInput struct {
 	mPostRcvd      metrics.StatCounter
 	mWSRcvd        metrics.StatCounter
 	mLatency       metrics.StatTimer
-	middlewareMeta func(*http.Request) (map[string]any, error)
+	middlewareMeta HTTPInputMiddlewareMeta
 }
 
-func newHTTPServerInput(conf hsiConfig, mgr bundle.NewManagement, middleware func(*http.Request) (map[string]any, error)) (input.Streamed, error) {
+func newHTTPServerInput(conf hsiConfig, mgr bundle.NewManagement, middleware HTTPInputMiddlewareMeta) (input.Streamed, error) {
 	var gMux *mux.Router
 	var server *http.Server
 
