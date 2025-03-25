@@ -346,7 +346,7 @@ input:
 `)
 }
 
-// HTTTPInputMiddlewareMeta is a custom middleware type for HTTP server inputs that adds metadata to messages.
+// HTTPInputMiddlewareMeta is a custom middleware type for HTTP server inputs that adds metadata to messages.
 type HTTPInputMiddlewareMeta func(*http.Request) (map[string]any, error)
 type HTTPInputMiddlewareMetaConstructor func(conf *service.ParsedConfig) (HTTPInputMiddlewareMeta, error)
 

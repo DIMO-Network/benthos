@@ -15,10 +15,10 @@ import (
 	"github.com/redpanda-data/benthos/v4/public/service"
 )
 
-// HTTTPInputMiddlewareMeta is a public type that is used to register custom middleware for adding metadata to a message.
-type HTTTPInputMiddlewareMetaConst io.HTTPInputMiddlewareMetaConstructor
+// InputMiddlewareMeta is a public type that is used to register custom middleware for adding metadata to a message.
+type HTTPInputMiddlewareMetaConst io.HTTPInputMiddlewareMetaConstructor
 
 // RegisterCustomHTTPServerInput registers a custom HTTP server input with a given name and optional middleware.
-func RegisterCustomHTTPServerInput(name string, middlewareConst HTTTPInputMiddlewareMetaConst, conf *service.ConfigField) {
+func RegisterCustomHTTPServerInput(name string, middlewareConst HTTPInputMiddlewareMetaConst, conf *service.ConfigField) {
 	io.RegisterCustomHTTPServerInput(name, io.HTTPInputMiddlewareMetaConstructor(middlewareConst), conf)
 }
