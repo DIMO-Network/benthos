@@ -347,10 +347,11 @@ input:
 }
 
 // HTTTPInputMiddlewareMeta is a custom middleware type for HTTP server inputs that adds metadata to messages.
-type HTTTPInputMiddlewareMeta func(conf *service.ParsedConfig) (func(*http.Request) (map[string]any, error), error)
+type HTTTPInputMiddlewareMeta func(*http.Request) (map[string]any, error)
+type HTTTPInputMiddlewareMetaConstructor func(conf *service.ParsedConfig) (HTTTPInputMiddlewareMeta, error)
 
 // RegisterCustomHTTPServerInput registers a custom HTTP server input with a given name and optional middleware.
-func RegisterCustomHTTPServerInput(name string, middleware HTTTPInputMiddlewareMeta, extraSpec *service.ConfigField) {
+func RegisterCustomHTTPServerInput(name string, mdlWareConst HTTTPInputMiddlewareMetaConstructor, extraSpec *service.ConfigField) {
 	spec := hsiSpec().Field(extraSpec)
 	err := service.RegisterBatchInput(
 		name, spec,
@@ -362,11 +363,13 @@ func RegisterCustomHTTPServerInput(name string, middleware HTTTPInputMiddlewareM
 
 			// TODO: If we refactor this input to implement ReadBatch then we
 			// can return a proper service.BatchInput implementation.
-			mdWare, err := middleware(conf)
+			oldMgr := interop.UnwrapManagement(mgr)
+
+			mdWare, err := mdlWareConst(conf)
 			if err != nil {
 				return nil, err
 			}
-			oldMgr := interop.UnwrapManagement(mgr)
+
 			i, err := newHTTPServerInput(hsiConf, oldMgr, mdWare)
 			if err != nil {
 				return nil, err
