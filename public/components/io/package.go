@@ -11,17 +11,15 @@
 package io
 
 import (
-	"net/http"
-
 	"github.com/redpanda-data/benthos/v4/internal/impl/io"
 	"github.com/redpanda-data/benthos/v4/public/service"
 )
 
 // HTTPInputMiddlewareMetaConst is a public type that is used to construct the http input middleware with optional config fields.
-type HTTPInputMiddlewareMetaConst func(conf *service.ParsedConfig) (func(*http.Request) (map[string]any, error), error)
+type HTTPInputMiddlewareMetaConst = io.HTTPInputMiddlewareMetaConst
 
 // HTTPInputMiddlewareMeta is a public type that is used to register custom middleware for adding metadata to a message.
-type HTTPInputMiddlewareMeta func(*http.Request) (map[string]any, error)
+type HTTPInputMiddlewareMeta = io.HTTPInputMiddlewareMeta
 
 // RegisterCustomHTTPServerInput registers a custom HTTP server input with a given name and optional middleware.
 func RegisterCustomHTTPServerInput(name string, middlewareConst HTTPInputMiddlewareMetaConst, conf *service.ConfigField) {
