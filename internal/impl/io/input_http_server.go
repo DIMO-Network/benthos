@@ -347,7 +347,7 @@ input:
 }
 
 // HTTPInputMiddlewareMetaConst is a type that is used to construct the http input middleware with optional config fields.
-type HTTPInputMiddlewareMetaConstructor func(conf *service.ParsedConfig) (func(*http.Request) (map[string]any, error), error)
+type HTTPInputMiddlewareMetaConstructor func(conf *service.ParsedConfig) (HTTPInputMiddlewareMeta, error)
 
 // HTTPInputMiddlewareMeta is a type that is used to register custom middleware for adding metadata to a message.
 type HTTPInputMiddlewareMeta func(*http.Request) (map[string]any, error)
