@@ -368,8 +368,8 @@ func RegisterCustomHTTPServerInput(name string, mdlWareConst HTTPInputMiddleware
 
 			// TODO: If we refactor this input to implement ReadBatch then we
 			// can return a proper service.BatchInput implementation.
-			oldMgr := interop.UnwrapManagement(mgr)
 
+			oldMgr := interop.UnwrapManagement(mgr)
 			mdWare, err := mdlWareConst(conf)
 			if err != nil {
 				return nil, err
