@@ -92,7 +92,7 @@ dropped.`).
 }
 
 func init() {
-	err := service.RegisterBatchProcessor(
+	service.MustRegisterBatchProcessor(
 		"json_schema", jschemaProcSpec(),
 		func(conf *service.ParsedConfig, res *service.Resources) (service.BatchProcessor, error) {
 			schemaStr, _ := conf.FieldString(jschemaPFieldSchema)
@@ -104,9 +104,6 @@ func init() {
 			}
 			return interop.NewUnwrapInternalBatchProcessor(processor.NewAutoObservedProcessor("json_schema", p, mgr)), nil
 		})
-	if err != nil {
-		panic(err)
-	}
 }
 
 type jsonSchemaProc struct {
@@ -120,7 +117,7 @@ func newJSONSchema(schemaStr, schemaPath string, mgr bundle.NewManagement) (proc
 
 	// load JSONSchema definition
 	if schemaPath := schemaPath; schemaPath != "" {
-		if !(strings.HasPrefix(schemaPath, "file://") || strings.HasPrefix(schemaPath, "http://")) {
+		if !strings.HasPrefix(schemaPath, "file://") && !strings.HasPrefix(schemaPath, "http://") {
 			return nil, errors.New("invalid schema_path provided, must start with file:// or http://")
 		}
 

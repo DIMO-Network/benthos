@@ -5,6 +5,7 @@ package httpclient
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"io"
@@ -120,6 +121,12 @@ func NewClientFromOldConfig(conf OldConfig, mgr *service.Resources, opts ...Requ
 		return nil, fmt.Errorf("failed to config logger for request dump: %v", err)
 	}
 
+	if conf.DisableHTTP2 {
+		if c, ok := h.client.Transport.(*http.Transport); ok {
+			c.TLSNextProto = map[string]func(string, *tls.Conn) http.RoundTripper{}
+		}
+	}
+
 	h.client = conf.clientCtor(h.clientCtx, h.client)
 
 	for _, c := range conf.BackoffOn {
@@ -214,7 +221,15 @@ func (h *Client) ResponseToBatch(res *http.Response) (service.MessageBatch, erro
 			for k, values := range res.Header {
 				normalisedHeader := strings.ToLower(k)
 				if len(values) > 0 && h.metaExtractFilter.Match(normalisedHeader) {
-					p.MetaSetMut(normalisedHeader, values[0])
+					if len(values) == 1 {
+						p.MetaSetMut(normalisedHeader, values[0])
+					} else {
+						metaVal := make([]any, 0, len(values))
+						for _, v := range values {
+							metaVal = append(metaVal, v)
+						}
+						p.MetaSetMut(normalisedHeader, metaVal)
+					}
 				}
 			}
 		}

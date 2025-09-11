@@ -34,15 +34,12 @@ Delivery guarantees [can be a dodgy subject](https://youtu.be/QmpBOCvY8mY). Bent
 
 This behaviour is the default and free of caveats, which also makes deploying and scaling Benthos much simpler.
 
-## Lint
+## Formatting and Linting
 
-Benthos uses [golangci-lint][golangci-lint] for linting, which you can install with:
+Benthos uses [golangci-lint][golangci-lint] for formatting and linting.
 
-```shell
-curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin
-```
-
-And then run it with `make lint`.
+- `task fmt` to format the codebase,
+- `task lint` to lint the codebase.
 
 [godoc-badge]: https://pkg.go.dev/badge/github.com/redpanda-data/benthos/v4/public
 [godoc-url]: https://pkg.go.dev/github.com/redpanda-data/benthos/v4/public

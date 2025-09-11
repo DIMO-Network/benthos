@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/Jeffail/gabs/v2"
-	"github.com/gofrs/uuid"
+	"github.com/gofrs/uuid/v5"
 	gonanoid "github.com/matoous/go-nanoid/v2"
 	"github.com/segmentio/ksuid"
 
@@ -920,6 +920,35 @@ var _ = registerSimpleFunction(
 			panic(err)
 		}
 		return u4.String(), nil
+	},
+)
+
+var _ = registerFunction(
+	NewFunctionSpec(
+		FunctionCategoryGeneral, "uuid_v7",
+		"Generates a new time ordered UUID each time it is invoked and prints a string representation.",
+		NewExampleSpec("", `root.id = uuid_v7()`),
+		NewExampleSpec("It is also possible to specify the timestamp for the uuid_v7", `root.id = uuid_v7(now().ts_sub_iso8601("PT1M"))`),
+	).Param(ParamTimestamp("time", "An optional timestamp to use for the time ordered portion of the UUID.").Optional()),
+	func(args *ParsedParams) (Function, error) {
+		time, err := args.FieldOptionalTimestamp("time")
+		if err != nil {
+			return nil, err
+		}
+		return ClosureFunction("function uuid_v7", func(fctx FunctionContext) (any, error) {
+			if time == nil {
+				u7, err := uuid.NewV7()
+				if err != nil {
+					return nil, fmt.Errorf("unable to generate uuid v7: %w", err)
+				}
+				return u7.String(), nil
+			}
+			u7, err := uuid.NewV7AtTime(*time)
+			if err != nil {
+				return nil, fmt.Errorf("unable to generate uuid v7 at time %s: %w", *time, err)
+			}
+			return u7.String(), nil
+		}, nil), nil
 	},
 )
 

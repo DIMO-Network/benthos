@@ -140,8 +140,11 @@ func NewPullRunner(c *cli.Context, cliOpts *common.CLIOpts, token, secret string
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse endpoint: %w", err)
 	}
-	baseURL.Path = path.Join(baseURL.Path, fmt.Sprintf("/api/v1/node/session/%v", c.String("session")))
-
+	apiPathPrefix := c.String("api-path-prefix")
+	if apiPathPrefix == "" {
+		apiPathPrefix = "api"
+	}
+	baseURL.Path = path.Join(baseURL.Path, "/", apiPathPrefix, fmt.Sprintf("v1/node/session/%v", c.String("session")))
 	// Logger is suuuuper primitive so we need to have one available before we
 	// bootstrap. In order to accommodate this we create a hot swappable logger
 	// that gets replaced each time a new config is loaded.
@@ -315,6 +318,11 @@ func (r *PullRunner) bootstrapConfigReader(ctx context.Context) (bootstrapErr er
 	}()
 
 	mgrTmp := stopMgrTmp.Manager().WithAddedMetrics(r.metrics)
+
+	if err := r.cliOpts.OnManagerInitialised(mgrTmp, nil); err != nil {
+		return fmt.Errorf("failed to execute manager initialisation hook: %w", err)
+	}
+
 	if err := r.triggerStreamReset(ctx, &conf, mgrTmp); err != nil {
 		return fmt.Errorf("failed initial stream reset: %w", err)
 	}

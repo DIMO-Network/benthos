@@ -45,7 +45,7 @@ This processor adds the following metadata fields to each message:
 
 `+"```text"+`
 - retry_count - The number of retry attempts.
-- backoff_duration - The total time elapsed while performing retries.
+- backoff_duration - The total time (in nanoseconds) elapsed while performing retries.
 `+"```"+`
 
 [CAUTION]
@@ -118,7 +118,7 @@ output:
 }
 
 func init() {
-	err := service.RegisterBatchProcessor(
+	service.MustRegisterBatchProcessor(
 		"retry", retryProcSpec(),
 		func(conf *service.ParsedConfig, res *service.Resources) (service.BatchProcessor, error) {
 			mgr := interop.UnwrapManagement(res)
@@ -151,9 +151,6 @@ func init() {
 
 			return interop.NewUnwrapInternalBatchProcessor(processor.NewAutoObservedBatchedProcessor("retry", p, mgr)), nil
 		})
-	if err != nil {
-		panic(err)
-	}
 }
 
 type retryProc struct {
@@ -218,7 +215,7 @@ func (r *retryProc) dispatchMessage(ctx context.Context, p *message.Part) (resBa
 		for _, b := range resBatches {
 			for _, m := range b {
 				m.MetaSetMut("retry_count", retries)
-				m.MetaSetMut("backoff_duration", backoffDuration)
+				m.MetaSetMut("backoff_duration", backoffDuration.Nanoseconds())
 			}
 		}
 	}()

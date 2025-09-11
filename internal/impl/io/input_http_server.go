@@ -358,7 +358,7 @@ func RegisterCustomHTTPServerInput(name string, mdlWareConst HTTPInputMiddleware
 	if extraSpec != nil {
 		spec = hsiSpec().Field(extraSpec)
 	}
-	err := service.RegisterBatchInput(
+	service.MustRegisterBatchInput(
 		name, spec,
 		func(conf *service.ParsedConfig, mgr *service.Resources) (service.BatchInput, error) {
 			hsiConf, err := hsiConfigFromParsed(conf)
@@ -382,9 +382,6 @@ func RegisterCustomHTTPServerInput(name string, mdlWareConst HTTPInputMiddleware
 
 			return interop.NewUnwrapInternalInput(i), nil
 		})
-	if err != nil {
-		panic(err)
-	}
 }
 
 func init() {

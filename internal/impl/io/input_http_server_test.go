@@ -54,7 +54,7 @@ func (a apiRegGorillaMutWrapper) RegisterEndpoint(path, desc string, h http.Hand
 }
 
 func TestHTTPBasic(t *testing.T) {
-	tCtx, done := context.WithTimeout(context.Background(), time.Minute)
+	tCtx, done := context.WithTimeout(t.Context(), time.Minute)
 	defer done()
 
 	t.Parallel()
@@ -221,7 +221,7 @@ func getFreePort(t testing.TB) int {
 func TestHTTPServerLifecycle(t *testing.T) {
 	t.Skip("This test seems to break on many systems")
 
-	tCtx, done := context.WithTimeout(context.Background(), time.Minute)
+	tCtx, done := context.WithTimeout(t.Context(), time.Minute)
 	defer done()
 
 	freePort := getFreePort(t)
@@ -239,7 +239,7 @@ func TestHTTPServerLifecycle(t *testing.T) {
 		_ = apiImpl.ListenAndServe()
 	}()
 	defer func() {
-		_ = apiImpl.Shutdown(context.Background())
+		_ = apiImpl.Shutdown(t.Context())
 	}()
 
 	mgr, err := manager.New(manager.ResourceConfig{}, manager.OptSetAPIReg(apiImpl))
@@ -304,7 +304,7 @@ http_server:
 }
 
 func TestHTTPServerMetadata(t *testing.T) {
-	tCtx, done := context.WithTimeout(context.Background(), time.Minute)
+	tCtx, done := context.WithTimeout(t.Context(), time.Minute)
 	defer done()
 
 	reg := apiRegGorillaMutWrapper{mut: mux.NewRouter()}
@@ -369,7 +369,7 @@ http_server:
 }
 
 func TestHTTPServerPathParameters(t *testing.T) {
-	tCtx, done := context.WithTimeout(context.Background(), time.Minute)
+	tCtx, done := context.WithTimeout(t.Context(), time.Minute)
 	defer done()
 
 	reg := apiRegGorillaMutWrapper{mut: mux.NewRouter()}
@@ -436,7 +436,7 @@ http_server:
 }
 
 func TestHTTPServerPathIsPrefix(t *testing.T) {
-	tCtx, done := context.WithTimeout(context.Background(), time.Minute)
+	tCtx, done := context.WithTimeout(t.Context(), time.Minute)
 	defer done()
 
 	reg := apiRegGorillaMutWrapper{mut: mux.NewRouter()}
@@ -502,7 +502,7 @@ http_server:
 }
 
 func TestHTTPServerPathParametersCustomServer(t *testing.T) {
-	tCtx, done := context.WithTimeout(context.Background(), time.Minute)
+	tCtx, done := context.WithTimeout(t.Context(), time.Minute)
 	defer done()
 
 	freePort := getFreePort(t)
@@ -569,7 +569,7 @@ http_server:
 }
 
 func TestHTTPServerPathParametersCustomServerPathIsPrefix(t *testing.T) {
-	tCtx, done := context.WithTimeout(context.Background(), time.Minute)
+	tCtx, done := context.WithTimeout(t.Context(), time.Minute)
 	defer done()
 
 	freePort := getFreePort(t)
@@ -638,7 +638,7 @@ http_server:
 func TestHTTPBadRequests(t *testing.T) {
 	t.Parallel()
 
-	ctx, done := context.WithTimeout(context.Background(), time.Second*30)
+	ctx, done := context.WithTimeout(t.Context(), time.Second*30)
 	defer done()
 
 	reg := apiRegGorillaMutWrapper{mut: mux.NewRouter()}
@@ -672,7 +672,7 @@ http_server:
 }
 
 func TestHTTPTimeout(t *testing.T) {
-	tCtx, done := context.WithTimeout(context.Background(), time.Minute)
+	tCtx, done := context.WithTimeout(t.Context(), time.Minute)
 	defer done()
 
 	t.Parallel()
@@ -715,7 +715,7 @@ http_server:
 }
 
 func TestHTTPRateLimit(t *testing.T) {
-	tCtx, done := context.WithTimeout(context.Background(), time.Minute)
+	tCtx, done := context.WithTimeout(t.Context(), time.Minute)
 	defer done()
 
 	t.Parallel()
@@ -790,7 +790,7 @@ http_server:
 }
 
 func TestHTTPServerWebsockets(t *testing.T) {
-	tCtx, done := context.WithTimeout(context.Background(), time.Minute)
+	tCtx, done := context.WithTimeout(t.Context(), time.Minute)
 	defer done()
 
 	t.Parallel()
@@ -875,7 +875,7 @@ http_server:
 }
 
 func TestHTTPServerWSRateLimit(t *testing.T) {
-	tCtx, done := context.WithTimeout(context.Background(), time.Minute)
+	tCtx, done := context.WithTimeout(t.Context(), time.Minute)
 	defer done()
 
 	t.Parallel()
@@ -965,7 +965,7 @@ http_server:
 }
 
 func TestHTTPSyncResponseHeaders(t *testing.T) {
-	tCtx, done := context.WithTimeout(context.Background(), time.Minute)
+	tCtx, done := context.WithTimeout(t.Context(), time.Minute)
 	defer done()
 
 	t.Parallel()
@@ -1114,7 +1114,7 @@ func readMultipart(res *http.Response) ([]string, error) {
 }
 
 func TestHTTPSyncResponseMultipart(t *testing.T) {
-	tCtx, done := context.WithTimeout(context.Background(), time.Minute)
+	tCtx, done := context.WithTimeout(t.Context(), time.Minute)
 	defer done()
 
 	t.Parallel()
@@ -1190,7 +1190,7 @@ http_server:
 }
 
 func TestHTTPSyncResponseHeadersStatus(t *testing.T) {
-	tCtx, done := context.WithTimeout(context.Background(), time.Minute)
+	tCtx, done := context.WithTimeout(t.Context(), time.Minute)
 	defer done()
 
 	t.Parallel()
@@ -1303,7 +1303,7 @@ http_server:
 }
 
 func TestHTTPServerInputEnableCORSOrigins(t *testing.T) {
-	tCtx, done := context.WithTimeout(context.Background(), time.Minute)
+	tCtx, done := context.WithTimeout(t.Context(), time.Minute)
 	defer done()
 
 	freePort := getFreePort(t)

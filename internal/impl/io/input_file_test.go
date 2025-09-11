@@ -3,9 +3,9 @@
 package io_test
 
 import (
-	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"reflect"
 	"strconv"
 	"testing"
@@ -22,7 +22,8 @@ import (
 func TestFileDirectory(t *testing.T) {
 	tmpDir := t.TempDir()
 
-	tmpInnerDir, err := os.MkdirTemp(tmpDir, "benthos_inner")
+	tmpInnerDir := filepath.Join(tmpDir, "benthos_inner")
+	err := os.Mkdir(tmpInnerDir, 0o775)
 	require.NoError(t, err)
 
 	tmpFile, err := os.CreateTemp(tmpDir, "f1*.txt")
@@ -90,7 +91,7 @@ file:
 		assertValidMetaData(t, res, expFiles[resStr])
 		act[resStr] = struct{}{}
 
-		require.NoError(t, tran.Ack(context.Background(), nil))
+		require.NoError(t, tran.Ack(t.Context(), nil))
 	}
 
 	var open bool
@@ -109,7 +110,8 @@ file:
 func TestFileDirectoryDeprecated(t *testing.T) {
 	tmpDir := t.TempDir()
 
-	tmpInnerDir, err := os.MkdirTemp(tmpDir, "benthos_inner")
+	tmpInnerDir := filepath.Join(tmpDir, "benthos_inner")
+	err := os.Mkdir(tmpInnerDir, 0o775)
 	require.NoError(t, err)
 
 	tmpFile, err := os.CreateTemp(tmpDir, "f1*.txt")
@@ -176,7 +178,7 @@ file:
 		assertValidMetaData(t, res, expFiles[resStr])
 		act[resStr] = struct{}{}
 
-		require.NoError(t, tran.Ack(context.Background(), nil))
+		require.NoError(t, tran.Ack(t.Context(), nil))
 	}
 
 	var open bool

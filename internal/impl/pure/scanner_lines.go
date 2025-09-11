@@ -35,13 +35,10 @@ func linesScannerSpec() *service.ConfigSpec {
 }
 
 func init() {
-	err := service.RegisterBatchScannerCreator("lines", linesScannerSpec(),
+	service.MustRegisterBatchScannerCreator("lines", linesScannerSpec(),
 		func(conf *service.ParsedConfig, mgr *service.Resources) (service.BatchScannerCreator, error) {
 			return linesScannerFromParsed(conf)
 		})
-	if err != nil {
-		panic(err)
-	}
 }
 
 func linesScannerFromParsed(conf *service.ParsedConfig) (l *linesScanner, err error) {
@@ -112,11 +109,7 @@ type linesReaderStream struct {
 }
 
 func (l *linesReaderStream) NextBatch(ctx context.Context) (service.MessageBatch, error) {
-	for {
-		if !l.buf.Scan() {
-			break
-		}
-
+	for l.buf.Scan() {
 		if l.omitEmpty && len(l.buf.Bytes()) == 0 {
 			continue
 		}

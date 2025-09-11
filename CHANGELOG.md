@@ -3,11 +3,137 @@ Changelog
 
 All notable changes to this project will be documented in this file.
 
-## 4.44.0 - TBD
+## TBD
+
+### Changed
+
+- Logging: Enable timestamp output by default (@josephwoodward)
+
+## 4.55.0 - 2025-08-06
+
+### Added
+
+- Go API: New input wrapping field for forcing timely acknowledgements. (@Jeffail)
+
+### Fixed
+
+- The `/debug/stack` endpoint no longer truncates large traces. (@Jeffail)
+
+### Changed
+
+- The `retry` processor now emits the `backoff_duration` metadata as nanoseconds. (@mihaitodor)
+
+## 4.54.0 - 2025-07-28
+
+### Added
+
+- Added TLS support to the input and output `socket` components. (@eadwright)
+- Go API: New `public/schema` package for serde to and from a common schema format. (@Jeffail)
+- New Bloblang method `infer_schema`. (@Jeffail)
+
+## 4.53.1 - 2025-07-08
+
+### Fixed
+
+- Fixed an issue where backoff errors we being disregarded for output plugins. (@Jeffail)
+
+## 4.53.0 - 2025-06-10
+
+### Added
+
+- The `benchmark` processor metrics. (@mmatczuk)
+- New `string_enum` and `string_annotated_enum` template field types. (@mihaitodor)
+
+## 4.52.0 - 2025-05-29
+
+### Added
+
+- CLI flag `--env-file` added to the `blobl` command. (@mihaitodor)
+- Go API: New `ComponentLinter` APIs for linting general component configs. (@Jeffail)
+- New `bitwise_and`, `bitwise_or`, and `bitwise_xor` bloblang methods. (@eadwright)
+- Field `open_message_mapping` added to the `socket` input. (@eadwright)
+
+### Fixed
+
+- Fixed a regression bug where the `echo` and `lint` commands no longer loaded environment variables. (@mihaitodor)
+
+## 4.51.0 - 2025-05-15
+
+### Added
+
+- CLI flag `--api-path-prefix` added to the `studio pull` and `studio sync-schema` subcommands. (@mihaitodor)
+
+## 4.50.0 - 2025-04-29
+
+### Added
+
+- Config: Environment variable interpolation now supports `base64decode` as an optional transform function. (@mihaitodor)
+
+### Changed
+
+- Resources are now initialized lazily upon first usage. This means that resources which establish connections will only do so if they are being actively utilized. One consequence of this behaviour is that beyond linting errors your resource configs will only report errors if and when they are used. (@Jeffail)
+
+## 4.49.0 - 2025-04-28
+
+### Added
+
+- Go API: Builds can now customize the standard set of CLI subcommands (`lint`, `generate`, and so on). (@Jeffail)
+- Go API: Method added to the ResourceBuilder for injecting initialization routines. (@Jeffail)
+
+## 4.48.0 - 2025-04-23
+
+### Added
+
+- Field `client_auth` added to the `socket_server` input. (@filippog)
+- New Bloblang string method `uuid_v5`. (@artemklevtsov)
+
+### Changed
+
+- The `http_client` input and output and the `http` processor now support extracting multi-value HTTP headers. (@mihaitodor)
+
+## 4.47.0 - 2025-04-03
+
+### Added
+
+- Go API: New `ResourcesBuilder` API for creating and managing a suite of resources. (@Jeffail)
+- Go API: New cli opt func for adding custom cli subcommands. (@Jeffail)
+- Go API: New `ParseEnvFile` function added for parsing the same env file syntax as the `--env-file` cli flag. (@Jeffail)
+
+### Fixed
+
+- Fixed a bug where the `Contains()` method of `service.ParsedConfig` was returning `true` when using an optional `service.NewObjectField()` which wasn't set in the config. (@mihaitodor)
+
+## 4.46.0 - 2025-03-20
+
+### Added
+
+- Go API: New batch aware API for capturing synchronous responses from downstream components. (@Jeffail)
+
+## 4.45.1 - 2025-03-10
+
+### Fixed
+
+- The `fallback` output no longer panics when shutting down while some acks are still pending. (@mihaitodor)
+
+## 4.45.0 - 2025-03-06
+
+### Fixed
+
+- The `studio` `pull` CLI subcommand now triggers the `OnManagerInitialised` API hook. (@mihaitodor)
+
+## 4.44.1 - 2025-02-06
+
+### Fixed
+
+- Fixed an bug in configuration lookup for the `crash` processor. (@rockwotj)
+
+## 4.44.0 - 2025-02-04
 
 ### Added
 
 - A `crash` processor for FATAL logging. (@rockwotj)
+- A `uuid_v7` bloblang function. (@rockwotj)
+- Field `disable_http2` added to the `http_client` input and output and to the `http` processor. (@mihaitodor)
 
 ## 4.43.0 - 2025-01-13
 

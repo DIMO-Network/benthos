@@ -16,19 +16,16 @@ func init() {
 		Beta().
 		Summary(`Crashes the process using a fatal log message. The log message can be set using function interpolations described in  xref:configuration:interpolation.adoc#bloblang-queries[Bloblang queries] which allows you to log the contents and metadata of messages.`).
 		Field(service.NewInterpolatedStringField(""))
-	err := service.RegisterProcessor(
+	service.MustRegisterProcessor(
 		"crash", spec,
 		func(conf *service.ParsedConfig, res *service.Resources) (service.Processor, error) {
-			messageStr, err := conf.FieldInterpolatedString("")
+			messageStr, err := conf.FieldInterpolatedString()
 			if err != nil {
 				return nil, err
 			}
 			mgr := interop.UnwrapManagement(res)
 			return &crashProcessor{mgr.Logger(), messageStr}, nil
 		})
-	if err != nil {
-		panic(err)
-	}
 }
 
 type crashProcessor struct {

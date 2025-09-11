@@ -4,6 +4,7 @@ package template_test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -50,7 +51,7 @@ mapping: |
 	c, err := mgr.NewCache(conf)
 	require.NoError(t, err)
 
-	res, err := c.Get(context.Background(), "foo")
+	res, err := c.Get(t.Context(), "foo")
 	require.NoError(t, err)
 
 	assert.Equal(t, "meow", string(res))
@@ -106,7 +107,7 @@ mapping: |
 	require.Len(t, tran.Payload, 1)
 	assert.Equal(t, `{"bar":"AND THIS TOO","foo":"meow"}`, string(tran.Payload[0].AsBytes()))
 
-	require.NoError(t, tran.Ack(context.Background(), nil))
+	require.NoError(t, tran.Ack(t.Context(), nil))
 
 	select {
 	case _, open = <-strm.TransactionChan():
@@ -180,12 +181,12 @@ mapping: |
 	require.Len(t, tran.Payload, 1)
 	assert.Equal(t, `MEOW WOOF`, string(tran.Payload[0].AsBytes()))
 
-	require.NoError(t, tran.Ack(context.Background(), nil))
+	require.NoError(t, tran.Ack(t.Context(), nil))
 
 	close(tInChan)
 	strm.TriggerCloseNow()
 
-	ctx, done := context.WithTimeout(context.Background(), time.Second)
+	ctx, done := context.WithTimeout(t.Context(), time.Second)
 	defer done()
 	require.NoError(t, strm.WaitForClose(ctx))
 }
@@ -216,7 +217,7 @@ mapping: |
 	p, err := mgr.NewProcessor(conf)
 	require.NoError(t, err)
 
-	res, err := p.ProcessBatch(context.Background(), message.Batch{
+	res, err := p.ProcessBatch(t.Context(), message.Batch{
 		message.NewPart([]byte("woof")),
 	})
 	require.NoError(t, err)
@@ -258,7 +259,7 @@ mapping: |
 	p, err := mgr.NewProcessor(conf)
 	require.NoError(t, err)
 
-	res, err := p.ProcessBatch(context.Background(), message.Batch{
+	res, err := p.ProcessBatch(t.Context(), message.Batch{
 		message.NewPart([]byte(`{"go":true,"id":"aaa"}`)),
 	})
 	require.NoError(t, err)
@@ -294,11 +295,11 @@ mapping: |
 	r, err := mgr.NewRateLimit(conf)
 	require.NoError(t, err)
 
-	d, err := r.Access(context.Background())
+	d, err := r.Access(t.Context())
 	require.NoError(t, err)
 	assert.Equal(t, d, time.Duration(0))
 
-	d, err = r.Access(context.Background())
+	d, err = r.Access(t.Context())
 	require.NoError(t, err)
 	assert.Greater(t, d, time.Hour-time.Minute)
 	assert.Less(t, d, time.Hour+time.Minute)
@@ -353,7 +354,7 @@ mapping: |
 			p, err := mgr.NewProcessor(conf)
 			require.NoError(t, err)
 
-			res, err := p.ProcessBatch(context.Background(), message.Batch{
+			res, err := p.ProcessBatch(t.Context(), message.Batch{
 				message.NewPart([]byte(test.msg)),
 			})
 			require.NoError(t, err)
@@ -503,7 +504,163 @@ mapping: |
 			}
 			require.NoError(t, err)
 
-			res, err := p.ProcessBatch(context.Background(), message.Batch{
+			res, err := p.ProcessBatch(t.Context(), message.Batch{
+				message.NewPart([]byte(test.message)),
+			})
+			require.NoError(t, err)
+			require.Len(t, res, 1)
+			require.Len(t, res[0], 1)
+			require.NoError(t, res[0][0].ErrorGet())
+			assert.Equal(t, test.expected, string(res[0][0].AsBytes()))
+		})
+	}
+}
+
+func TestProcessorTemplateStringFieldLinting(t *testing.T) {
+	tests := []struct {
+		name         string
+		fieldType    string
+		fieldValue   any
+		fieldOptions any
+		message      string
+		expected     string
+		errContains  string
+		lintContains string
+	}{
+		{
+			name:       "valid string field",
+			fieldType:  "string",
+			fieldValue: `"foobar"`,
+			message:    "test",
+			expected:   "foobar",
+		},
+		{
+			name:         "valid string_enum field",
+			fieldType:    "string_enum",
+			fieldValue:   `"foobar"`,
+			fieldOptions: []string{"foobar", "bazqux"},
+			message:      "test",
+			expected:     "foobar",
+		},
+		{
+			name:         "rejects empty options for string_enum fields",
+			fieldType:    "string_enum",
+			fieldValue:   `"foobar"`,
+			fieldOptions: []string{},
+			message:      "test",
+			errContains:  "field 0: at least one option must be provided",
+		},
+		{
+			name:         "rejects duplicate options for string_enum fields",
+			fieldType:    "string_enum",
+			fieldValue:   `"foobar"`,
+			fieldOptions: []string{"foo", "bar", "foo"},
+			message:      "test",
+			errContains:  "field 0: duplicate options are not allowed",
+		},
+		{
+			name:         "rejects non-string options for string_enum fields",
+			fieldType:    "string_enum",
+			fieldValue:   `"foobar"`,
+			fieldOptions: []any{"foo", "bar", 42},
+			message:      "test",
+			errContains:  "field 0: only string options are allowed",
+		},
+		{
+			name:         "rejects non-array options for string_enum fields",
+			fieldType:    "string_enum",
+			fieldValue:   `"foobar"`,
+			fieldOptions: map[string]string{"foo": "bar"},
+			message:      "test",
+			errContains:  "field 0: expected options to be an array, got: map[string]interface {}",
+		},
+		{
+			name:         "valid string_annotated_enum field",
+			fieldType:    "string_annotated_enum",
+			fieldValue:   `"foobar"`,
+			fieldOptions: map[string]string{"foobar": "Foo Bar", "bazqux": "Baz Qux"},
+			message:      "test",
+			expected:     "foobar",
+		},
+		{
+			name:         "rejects empty options for string_annotated_enum fields",
+			fieldType:    "string_annotated_enum",
+			fieldValue:   `"foobar"`,
+			fieldOptions: map[string]string{},
+			message:      "test",
+			errContains:  "field 0: at least one annotated option must be provided",
+		},
+		{
+			name:         "rejects non-string options string_annotated_enum fields",
+			fieldType:    "string_annotated_enum",
+			fieldValue:   `"foobar"`,
+			fieldOptions: map[string]any{"foo": "bar", "fizz": 42},
+			message:      "test",
+			errContains:  `field 0: expected the annotation for option "fizz" to be a string, got: int`,
+		},
+		{
+			name:         "rejects non-object options string_annotated_enum fields",
+			fieldType:    "string_annotated_enum",
+			fieldValue:   `"foobar"`,
+			fieldOptions: []string{"foo", "bar"},
+			message:      "test",
+			errContains:  `field 0: expected options to be an object, got: []interface {}`,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			mgr, err := manager.New(manager.NewResourceConfig())
+			require.NoError(t, err)
+
+			options, err := json.Marshal(test.fieldOptions)
+			require.NoError(t, err)
+
+			tmpl := fmt.Sprintf(`
+name: foobar
+type: processor
+
+fields:
+  - name: test
+    type: %s
+    options: %s
+
+mapping: |
+  root.mapping = "root = %%s".format(this.test)
+`, test.fieldType, options)
+
+			err = template.RegisterTemplateYAML(mgr.Environment(), mgr.BloblEnvironment(), []byte(tmpl))
+			if test.errContains != "" {
+				require.ErrorContains(t, err, test.errContains)
+				return
+			}
+			require.NoError(t, err)
+
+			spec, ok := mgr.Environment().GetDocs("foobar", docs.TypeProcessor)
+			require.True(t, ok)
+
+			node, err := docs.UnmarshalYAML([]byte(fmt.Sprintf(`test: %v`, test.fieldValue)))
+			require.NoError(t, err)
+
+			lints := spec.Config.LintYAML(docs.NewLintContext(docs.NewLintConfig(mgr.Environment())), node)
+			if test.lintContains != "" {
+				require.Len(t, lints, 1)
+				assert.Contains(t, lints[0].What, test.lintContains)
+			} else {
+				require.Empty(t, lints)
+			}
+
+			conf, err := processor.FromAny(mgr, map[string]any{
+				"foobar": map[string]any{
+					"test": test.fieldValue,
+				},
+			})
+			require.NoError(t, err)
+
+			p, err := mgr.NewProcessor(conf)
+			require.NoError(t, err)
+
+			res, err := p.ProcessBatch(t.Context(), message.Batch{
 				message.NewPart([]byte(test.message)),
 			})
 			require.NoError(t, err)

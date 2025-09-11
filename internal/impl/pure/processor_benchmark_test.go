@@ -3,7 +3,6 @@
 package pure
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -22,18 +21,18 @@ interval: 0
 	now := func() time.Time { return currentTime }
 	reporter := &mockBenchmarkReporter{}
 
-	benchmarkProc, err := newBenchmarkProcFromConfig(conf, reporter, now)
+	benchmarkProc, err := newBenchmarkProcFromParsed(conf, service.MockResources(), reporter, now)
 	require.NoError(t, err)
 
 	msg := service.NewMessage([]byte("hello"))
 	for i := 0; i < 5; i++ {
-		batch, err := benchmarkProc.Process(context.Background(), msg)
+		batch, err := benchmarkProc.Process(t.Context(), msg)
 		require.NoError(t, err)
 		require.Equal(t, service.MessageBatch{msg}, batch)
 	}
 
 	currentTime = currentTime.Add(time.Second)
-	benchmarkProc.Close(context.Background())
+	benchmarkProc.Close(t.Context())
 
 	require.Equal(t, []mockBenchmarkReport{
 		{
@@ -55,18 +54,18 @@ count_bytes: false
 	now := func() time.Time { return currentTime }
 	reporter := &mockBenchmarkReporter{}
 
-	benchmarkProc, err := newBenchmarkProcFromConfig(conf, reporter, now)
+	benchmarkProc, err := newBenchmarkProcFromParsed(conf, service.MockResources(), reporter, now)
 	require.NoError(t, err)
 
 	msg := service.NewMessage([]byte("hello"))
 	for i := 0; i < 5; i++ {
-		batch, err := benchmarkProc.Process(context.Background(), msg)
+		batch, err := benchmarkProc.Process(t.Context(), msg)
 		require.NoError(t, err)
 		require.Equal(t, service.MessageBatch{msg}, batch)
 	}
 
 	currentTime = currentTime.Add(time.Second)
-	benchmarkProc.Close(context.Background())
+	benchmarkProc.Close(t.Context())
 
 	require.Equal(t, []mockBenchmarkReport{
 		{

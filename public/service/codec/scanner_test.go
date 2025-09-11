@@ -41,20 +41,20 @@ third`))
 	for _, s := range []string{
 		"first", "second", "third",
 	} {
-		m, aFn, err := strm.NextBatch(context.Background())
+		m, aFn, err := strm.NextBatch(t.Context())
 		require.NoError(t, err)
 		require.Len(t, m, 1)
 		mBytes, err := m[0].AsBytes()
 		require.NoError(t, err)
 		assert.Equal(t, s, string(mBytes))
-		require.NoError(t, aFn(context.Background(), nil))
+		require.NoError(t, aFn(t.Context(), nil))
 		assert.False(t, acked)
 	}
 
-	_, _, err = strm.NextBatch(context.Background())
+	_, _, err = strm.NextBatch(t.Context())
 	require.Equal(t, io.EOF, err)
 
-	require.NoError(t, strm.Close(context.Background()))
+	require.NoError(t, strm.Close(t.Context()))
 	assert.True(t, acked)
 }
 
@@ -82,20 +82,20 @@ scanner:
 	for _, s := range []string{
 		"first", "second", "third",
 	} {
-		m, aFn, err := strm.NextBatch(context.Background())
+		m, aFn, err := strm.NextBatch(t.Context())
 		require.NoError(t, err)
 		require.Len(t, m, 1)
 		mBytes, err := m[0].AsBytes()
 		require.NoError(t, err)
 		assert.Equal(t, s, string(mBytes))
-		require.NoError(t, aFn(context.Background(), nil))
+		require.NoError(t, aFn(t.Context(), nil))
 		assert.False(t, acked)
 	}
 
-	_, _, err = strm.NextBatch(context.Background())
+	_, _, err = strm.NextBatch(t.Context())
 	require.Equal(t, io.EOF, err)
 
-	require.NoError(t, strm.Close(context.Background()))
+	require.NoError(t, strm.Close(t.Context()))
 	assert.True(t, acked)
 }
 
@@ -118,19 +118,47 @@ func TestInteropCodecDefault(t *testing.T) {
 	for _, s := range []string{
 		"first", "second", "third",
 	} {
-		m, aFn, err := strm.NextBatch(context.Background())
+		m, aFn, err := strm.NextBatch(t.Context())
 		require.NoError(t, err)
 		require.Len(t, m, 1)
 		mBytes, err := m[0].AsBytes()
 		require.NoError(t, err)
 		assert.Equal(t, s, string(mBytes))
-		require.NoError(t, aFn(context.Background(), nil))
+		require.NoError(t, aFn(t.Context(), nil))
 		assert.False(t, acked)
 	}
 
-	_, _, err = strm.NextBatch(context.Background())
+	_, _, err = strm.NextBatch(t.Context())
 	require.Equal(t, io.EOF, err)
 
-	require.NoError(t, strm.Close(context.Background()))
+	require.NoError(t, strm.Close(t.Context()))
 	assert.True(t, acked)
+}
+
+func TestInteropCodecError(t *testing.T) {
+	// This test asserts that `DeprecatedFallbackCodec.Create` returns a nil `DeprecatedFallbackStream` if the scanner
+	// `Create` method returns an error.
+
+	confSpec := service.NewConfigSpec().Fields(codec.DeprecatedCodecFields("lines")...)
+	pConf, err := confSpec.ParseYAML(`
+scanner:
+  decompress:
+    algorithm: gzip
+    into:
+      lines: {}
+`, nil)
+	require.NoError(t, err)
+
+	rdr, err := codec.DeprecatedCodecFromParsed(pConf)
+	require.NoError(t, err)
+
+	// The `decompress` scanner will error out when trying to parse the `gzip` header from the nil buffer.
+	buf := bytes.NewReader(nil)
+	strm, err := rdr.Create(io.NopCloser(buf), func(ctx context.Context, err error) error {
+		return nil
+	}, service.NewScannerSourceDetails())
+	require.ErrorIs(t, err, io.EOF)
+	if strm != nil {
+		assert.Fail(t, "expected nil stream")
+	}
 }

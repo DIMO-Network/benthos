@@ -25,7 +25,7 @@ import (
 	"github.com/redpanda-data/benthos/v4/internal/message"
 	"github.com/redpanda-data/benthos/v4/public/service"
 
-	"github.com/gofrs/uuid"
+	"github.com/gofrs/uuid/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -141,7 +141,7 @@ func newStreamTestEnvironment(t testing.TB, confTemplate string) streamTestEnvir
 			},
 		},
 		timeout: time.Second * 90,
-		ctx:     context.Background(),
+		ctx:     t.Context(),
 		log:     log.Noop(),
 		stats:   metrics.Noop(),
 	}

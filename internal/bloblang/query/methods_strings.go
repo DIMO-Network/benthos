@@ -30,6 +30,7 @@ import (
 	"strings"
 
 	"github.com/OneOfOne/xxhash"
+	"github.com/gofrs/uuid/v5"
 	"github.com/tilinna/z85"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -348,6 +349,7 @@ root.encrypted = this.value.encrypt_aes("ctr", $key, $vector).encode("hex")`,
 		case "ofb":
 			schemeFn = func(b []byte) (string, error) {
 				ciphertext := make([]byte, len(b))
+				//nolint:staticcheck // SA1019: cipher.NewOFB has been deprecated since Go 1.24
 				stream := cipher.NewOFB(block, iv)
 				stream.XORKeyStream(ciphertext, b)
 				return string(ciphertext), nil
@@ -457,6 +459,7 @@ root.decrypted = this.value.decode("hex").decrypt_aes("ctr", $key, $vector).stri
 		case "ofb":
 			schemeFn = func(b []byte) ([]byte, error) {
 				plaintext := make([]byte, len(b))
+				//nolint:staticcheck // SA1019: cipher.NewOFB has been deprecated since Go 1.24
 				stream := cipher.NewOFB(block, iv)
 				stream.XORKeyStream(plaintext, b)
 				return plaintext, nil
@@ -893,6 +896,63 @@ root.h2 = this.value.hash(algorithm: "crc32", polynomial: "Koopman").encode("hex
 				err = value.NewTypeError(v, value.TString)
 			}
 			return res, err
+		}, nil
+	},
+)
+
+//------------------------------------------------------------------------------
+
+var _ = registerSimpleMethod(
+	NewMethodSpec(
+		"uuid_v5", "",
+	).InCategory(
+		MethodCategoryEncoding,
+		`
+Returns UUID version 5 for the given string.`,
+		NewExampleSpec("", `root.id = "example".uuid_v5()`, `{"id": "feb54431-301b-52bb-a6dd-e1e93e81bb9e"}`),
+		NewExampleSpec("", `root.id = "example".uuid_v5("x500")`, `{"id": "0cbd148f-768f-52fe-a1cd-0c4e6c65de91"}`),
+		NewExampleSpec("", `root.id = "example".uuid_v5("77f836b7-9f61-46c0-851e-9b6ca3535e69")`, `{"id": "a0d220eb-18f1-50ca-b888-86aa5b604edf"}`),
+	).Param(ParamString("ns", "An optional namespace name or UUID. It supports the `dns`, `url`, `oid` and `x500` predefined namespaces and any valid RFC-9562 UUID. If empty, the nil UUID will be used.").Optional()),
+	func(args *ParsedParams) (simpleMethod, error) {
+		ns, err := args.FieldOptionalString("ns")
+		if err != nil {
+			return nil, err
+		}
+
+		return func(v any, ctx FunctionContext) (any, error) {
+			if v == nil {
+				return nil, nil
+			}
+
+			var uns uuid.UUID
+			if ns == nil {
+				uns = uuid.Nil
+			} else {
+				switch *ns {
+				case "dns", "DNS":
+					uns = uuid.NamespaceDNS
+				case "url", "URL":
+					uns = uuid.NamespaceURL
+				case "oid", "OID":
+					uns = uuid.NamespaceOID
+				case "x500", "X500":
+					uns = uuid.NamespaceX500
+				default:
+					uns, err = uuid.FromString(*ns)
+					if err != nil {
+						return nil, fmt.Errorf("invalid ns uuid: %q", *ns)
+					}
+				}
+			}
+
+			switch t := v.(type) {
+			case string:
+				return uuid.NewV5(uns, t).String(), nil
+			case []byte:
+				return uuid.NewV5(uns, string(t)).String(), nil
+			}
+
+			return nil, value.NewTypeError(v, value.TString)
 		}, nil
 	},
 )

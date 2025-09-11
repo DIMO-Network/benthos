@@ -51,7 +51,7 @@ pipeline:
 `+"```"+`
 `).
 		Fields(
-			service.NewStringEnumField(logPFieldLevel, "ERROR", "WARN", "INFO", "DEBUG", "TRACE", "ALL").
+			service.NewStringEnumField(logPFieldLevel, "ERROR", "WARN", "INFO", "DEBUG", "TRACE").
 				Description("The log level to use.").
 				LintRule(``).
 				Default("INFO"),
@@ -75,7 +75,7 @@ root.kafka_topic = meta("kafka_topic")`,
 }
 
 func init() {
-	err := service.RegisterBatchProcessor(
+	service.MustRegisterBatchProcessor(
 		"log", logProcSpec(),
 		func(conf *service.ParsedConfig, res *service.Resources) (service.BatchProcessor, error) {
 			logLevel, err := conf.FieldString(logPFieldLevel)
@@ -99,9 +99,6 @@ func init() {
 			}
 			return interop.NewUnwrapInternalBatchProcessor(processor.NewAutoObservedBatchedProcessor("log", p, mgr)), nil
 		})
-	if err != nil {
-		panic(err)
-	}
 }
 
 type logProcessor struct {
